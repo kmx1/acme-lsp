@@ -36,24 +36,36 @@ func CompatibleCodeActions(cap *protocol.ServerCapabilities, kinds []protocol.Co
 		}
 		return nil
 	case protocol.CodeActionOptions:
+		return matchCompats(kinds, ap.CodeActionKinds)
+	case map[string]interface{}:
+		compatI := ap["codeActionKinds"].([]interface{})
 		var compat []protocol.CodeActionKind
-		for _, k := range kinds {
-			found := false
-			for _, kk := range ap.CodeActionKinds {
-				if k == kk {
-					found = true
-					break
-				}
-			}
-			if found {
-				compat = append(compat, k)
-			} else {
-				log.Printf("code action %v is not compatible with server", k)
-			}
+		for _, c := range compatI {
+			cStr := c.(string)
+			compat = append(compat, protocol.CodeActionKind(cStr))
 		}
-		return compat
+		return matchCompats(kinds, compat)
 	}
 	return nil
+}
+
+func matchCompats(kinds []protocol.CodeActionKind, compats []protocol.CodeActionKind) []protocol.CodeActionKind {
+	var compat []protocol.CodeActionKind
+	for _, k := range kinds {
+		found := false
+		for _, kk := range compats {
+			if k == kk {
+				found = true
+				break
+			}
+		}
+		if found {
+			compat = append(compat, k)
+		} else {
+			log.Printf("code action %v is not compatible with server", k)
+		}
+	}
+	return compat
 }
 
 func LocationLink(l *protocol.Location) string {
